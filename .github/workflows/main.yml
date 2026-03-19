@@ -1,0 +1,38 @@
+name: Update SoundCloud Client IDs
+
+on:
+  schedule:
+    - cron: '0 */3 * * *' # Запуск каждые 3 часа
+  workflow_dispatch: # Позволяет запускать вручную
+
+permissions:
+  contents: write # Даем права на запись (чтобы обновить json)
+
+jobs:
+  update-pool:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.10'
+
+      - name: Install dependencies
+        run: pip install requests
+
+      - name: Run Extractor
+        run: python client_id_pool.py
+
+      - name: Commit and Push changes
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          git config --local user.email "github-actions[bot]@users.noreply.github.com"
+          git config --local user.name "github-actions[bot]"
+          git add client_ids.json
+          git commit -m "Update client_id pool [skip ci]" || echo "No changes to commit"
+          git push origin main
